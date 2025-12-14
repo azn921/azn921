@@ -64,3 +64,57 @@ LlamaIndex is an innovative framework designed to streamline the integration of 
 ## Contributions
 
 We welcome your feedback and contributions. Enhance ruvBot by submitting issues and pull requests on our [GitHub repository](https://github.com/ruvnet/ruvbot).
+
+## Congress.gov Legislative Data Extractor (Python)
+
+This repo includes a Python CLI that extracts, normalizes, and stores legislative data from the official Congress.gov API (`https://api.congress.gov/v3`) for lobbying/policy tracking.
+
+### Setup
+
+- Set your API key as an environment variable:
+
+```bash
+export CONGRESS_API_KEY="YOUR_KEY_HERE"
+```
+
+- Install Python dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Run
+
+- Fetch specific bills:
+
+```bash
+python congress_gov_service.py --congress 119 --bill HR1234 --bill S.567
+```
+
+- Discover bills by keyword search (e.g. NDAA/appropriations):
+
+```bash
+python congress_gov_service.py --congress 119 --search "NDAA" --max-bills 50
+```
+
+- Optional committee/member exports:
+
+```bash
+python congress_gov_service.py --committee "Armed Services" --committee-chamber house
+python congress_gov_service.py --member "Schumer"
+```
+
+- Fast mode (skips member enrichment):
+
+```bash
+python congress_gov_service.py --search "appropriations" --json-only
+```
+
+### Outputs
+
+Files are saved under `./data/` (deduped across runs by `bill_id`):
+
+- `data/bills_raw.json`
+- `data/bills_normalized.json`
+- `data/committees.json`
+- `data/members.json`
