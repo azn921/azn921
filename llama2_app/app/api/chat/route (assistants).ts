@@ -5,20 +5,20 @@ interface Message {
   content: string;
 }
 
-async function checkRunStatus(threadId, runId, headers) {
+async function checkRunStatus(threadId: string, runId: string, headers: Headers): Promise<void> {
   while (true) {
     const runStatusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
       method: 'GET',
       headers: headers,
     });
 
-    const runStatus = await runStatusResponse.json();
+    const runStatus = (await runStatusResponse.json()) as { status?: string };
     if (runStatus.status === 'completed') {
       break;
     }
 
     // Wait for a short period before checking again
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise<void>((resolve) => setTimeout(resolve, 1000));
   }
 }
 export async function POST(request: NextRequest) {
@@ -95,12 +95,18 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to fetch messages: ${await completedMessagesResponse.text()}`);
     }
 
-    const completedMessages = await completedMessagesResponse.json();
+    const completedMessages = (await completedMessagesResponse.json()) as {
+      data?: Array<{
+        role?: string;
+        content?: Array<{ text?: { value?: string } }>;
+      }>;
+    };
 
     let assistantResponse = '';
-    completedMessages.data.forEach(msg => {
+    (completedMessages.data ?? []).forEach((msg) => {
       if (msg.role === 'assistant') {
-        assistantResponse += msg.content[0].text.value;
+        const value = msg.content?.[0]?.text?.value;
+        if (typeof value === "string") assistantResponse += value;
       }
     });
 

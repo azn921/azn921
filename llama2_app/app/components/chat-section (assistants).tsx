@@ -2,14 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useChat } from 'ai/react';
-import { ChatInput, ChatMessages } from './ui/chat';
-
-// Define the message structure
-interface Message {
-  id: string;
-  content: string | JSX.Element[]; // Allowing for JSX.Element array
-  role: string;
-}
+import { ChatInput, ChatMessages, type Message } from './ui/chat';
 
 export default function ChatSection() {
   const {
@@ -20,7 +13,6 @@ export default function ChatSection() {
     handleInputChange,
     reload,
     stop,
-    sessionId, // Adding sessionId for session handling
   } = useChat({ api: process.env.NEXT_PUBLIC_CHAT_API });
 
   // Define a default message
@@ -36,23 +28,9 @@ export default function ChatSection() {
   // Effect to update the chatMessages state with new messages from useChat
   useEffect(() => {
     if (messages && messages.length > 0) {
-      const processedMessages = messages.map(msg => ({
-        ...msg,
-        content: typeof msg.content === 'string' ? splitIntoParagraphs(msg.content) : msg.content,
-      }));
-      setChatMessages(processedMessages);
+      setChatMessages(messages as Message[]);
     }
-  }, [messages, sessionId]); // Add sessionId to useEffect dependencies
-
-  // Split message content into paragraphs
-  const splitIntoParagraphs = (content: string): JSX.Element[] => {
-    const paragraphs = content.split('\n\n');
-    return paragraphs.map((paragraph, index) => (
-      <p key={index} className="mb-2">
-        {paragraph}
-      </p>
-    ));
-  };
+  }, [messages]);
 
   return (
     <div className="space-y-4 max-w-5xl w-full">
