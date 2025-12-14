@@ -59,6 +59,12 @@ def _parse_iso_date(s: Optional[str]) -> Optional[dt.date]:
     s = s.strip()
     if not s:
         return None
+    # Common case: year-only strings
+    if re.fullmatch(r"\d{4}", s):
+        try:
+            return dt.date(int(s), 1, 1)
+        except Exception:
+            return None
     # Congress.gov commonly returns "YYYY-MM-DD" or full timestamps.
     for fmt in ("%Y-%m-%d", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%SZ"):
         try:
@@ -717,7 +723,16 @@ def run(args: argparse.Namespace) -> int:
 
     client = CongressGovClient(ClientConfig(api_key=api_key))
     out_dir = os.path.abspath(args.data_dir)
-    os.makedirs(out_dir, exist_ok=True)
+    try:
+        os.makedirs(out_dir, exist_ok=True)
+    except PermissionError:
+        if os.path.abspath(args.data_dir) == "/data":
+            fallback = os.path.abspath("./data")
+            logging.warning("No permission to write to /data; falling back to %s", fallback)
+            out_dir = fallback
+            os.makedirs(out_dir, exist_ok=True)
+        else:
+            raise
 
     bills_raw_path = os.path.join(out_dir, "bills_raw.json")
     bills_norm_path = os.path.join(out_dir, "bills_normalized.json")
@@ -880,7 +895,7 @@ def run(args: argparse.Namespace) -> int:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Extract, normalize, and store Congress.gov legislative data.")
-    p.add_argument("--data-dir", default="./data", help="Output directory (default: ./data)")
+    p.add_argument("--data-dir", default="/data", help="Output directory (default: /data)")
     p.add_argument("--congress", type=int, default=None, help="Congress number to default to (e.g., 119).")
     p.add_argument("--bill", action="append", default=[], help="Bill identifier(s), e.g. HR1234, S.567, hjres12-118. Can repeat or comma-separate.")
     p.add_argument("--search", action="append", default=[], help="Keyword-based discovery term(s). Can repeat.")
