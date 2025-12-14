@@ -1,11 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import ChatItem from "./chat-item";
 
 export interface Message {
   id: string;
-  content: string;
+  content: ReactNode;
   role: string;
 }
 
